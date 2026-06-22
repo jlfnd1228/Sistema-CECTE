@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 
@@ -10,6 +11,7 @@ class RegistroPublicoScreen extends StatefulWidget {
 }
 
 class _RegistroPublicoScreenState extends State<RegistroPublicoScreen> {
+  final _formKey       = GlobalKey<FormState>();
   final _usernameCtrl  = TextEditingController();
   final _passwordCtrl  = TextEditingController();
   final _firstNameCtrl = TextEditingController();
@@ -18,9 +20,11 @@ class _RegistroPublicoScreenState extends State<RegistroPublicoScreen> {
   final _documentoCtrl = TextEditingController();
   final _telefonoCtrl  = TextEditingController();
 
-  bool _obscure = true;
-  bool _loading = false;
+  bool _obscure  = true;
+  bool _loading  = false;
   String? _error;
+
+  static const Color kPrimary = Color(0xFF0A6E7A);
 
   @override
   void dispose() {
@@ -35,15 +39,7 @@ class _RegistroPublicoScreenState extends State<RegistroPublicoScreen> {
   }
 
   Future<void> _registrar() async {
-    if (_firstNameCtrl.text.trim().isEmpty ||
-        _lastNameCtrl.text.trim().isEmpty ||
-        _documentoCtrl.text.trim().isEmpty ||
-        _emailCtrl.text.trim().isEmpty ||
-        _usernameCtrl.text.trim().isEmpty ||
-        _passwordCtrl.text.isEmpty) {
-      setState(() => _error = 'Por favor completa todos los campos obligatorios.');
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
     setState(() { _loading = true; _error = null; });
     final auth = context.read<AuthService>();
     final error = await auth.registrarEstudiante({
@@ -51,7 +47,7 @@ class _RegistroPublicoScreenState extends State<RegistroPublicoScreen> {
       'password':   _passwordCtrl.text,
       'first_name': _firstNameCtrl.text.trim(),
       'last_name':  _lastNameCtrl.text.trim(),
-      'email':      _emailCtrl.text.trim(),
+      'email':      _emailCtrl.text.trim().toLowerCase(),
       'documento':  _documentoCtrl.text.trim(),
       'telefono':   _telefonoCtrl.text.trim(),
     });
@@ -78,12 +74,15 @@ class _RegistroPublicoScreenState extends State<RegistroPublicoScreen> {
                   borderRadius: BorderRadius.circular(20)),
               child: Padding(
                 padding: const EdgeInsets.all(36),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      // ── Encabezado ──────────────────────────────────
+                      Row(children: [
                         IconButton(
                           icon: const Icon(Icons.arrow_back),
                           onPressed: () => Navigator.pop(context),
@@ -95,102 +94,224 @@ class _RegistroPublicoScreenState extends State<RegistroPublicoScreen> {
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF1E293B))),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'El programa academico lo asigna el administrador despues de tu registro.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                    ),
-                    const SizedBox(height: 24),
-                    _campo(_firstNameCtrl, 'Nombres *', Icons.person_outline),
-                    const SizedBox(height: 12),
-                    _campo(_lastNameCtrl, 'Apellidos *', Icons.person_outline),
-                    const SizedBox(height: 12),
-                    _campo(_documentoCtrl, 'Numero de documento *', Icons.badge_outlined),
-                    const SizedBox(height: 12),
-                    _campo(_emailCtrl, 'Correo electronico *', Icons.email_outlined,
-                        tipo: TextInputType.emailAddress),
-                    const SizedBox(height: 12),
-                    _campo(_telefonoCtrl, 'Telefono (opcional)', Icons.phone_outlined,
-                        tipo: TextInputType.phone),
-                    const SizedBox(height: 20),
-                    const Divider(),
-                    const SizedBox(height: 12),
-                    const Text('Datos de acceso',
-                        style: TextStyle(fontWeight: FontWeight.bold,
-                            color: Color(0xFF64748B))),
-                    const SizedBox(height: 12),
-                    _campo(_usernameCtrl, 'Nombre de usuario *',
-                        Icons.account_circle_outlined),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _passwordCtrl,
-                      obscureText: _obscure,
-                      decoration: InputDecoration(
-                        labelText: 'Contrasena *',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility_off
-                              : Icons.visibility),
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              color: Color(0xFF0A6E7A), width: 2),
-                        ),
+                      ]),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'El programa académico lo asigna el administrador después de tu registro.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_error != null)
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEE2E2),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFFCA5A5)),
+                      const SizedBox(height: 24),
+
+                      // ── Datos personales ─────────────────────────────
+                      _seccion('Datos Personales'),
+                      const SizedBox(height: 12),
+
+                      _campo(
+                        ctrl: _firstNameCtrl,
+                        label: 'Nombres *',
+                        icon: Icons.person_outline,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'El nombre es obligatorio';
+                          if (v.trim().length < 2)
+                            return 'Mínimo 2 caracteres';
+                          if (!RegExp(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$").hasMatch(v.trim()))
+                            return 'Solo se permiten letras';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      _campo(
+                        ctrl: _lastNameCtrl,
+                        label: 'Apellidos *',
+                        icon: Icons.person_outline,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'El apellido es obligatorio';
+                          if (v.trim().length < 2)
+                            return 'Mínimo 2 caracteres';
+                          if (!RegExp(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$").hasMatch(v.trim()))
+                            return 'Solo se permiten letras';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      _campo(
+                        ctrl: _documentoCtrl,
+                        label: 'Número de documento *',
+                        icon: Icons.badge_outlined,
+                        tipo: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'El documento es obligatorio';
+                          if (v.trim().length < 6)
+                            return 'Mínimo 6 dígitos';
+                          if (v.trim().length > 15)
+                            return 'Máximo 15 dígitos';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      _campo(
+                        ctrl: _emailCtrl,
+                        label: 'Correo electrónico *',
+                        icon: Icons.email_outlined,
+                        tipo: TextInputType.emailAddress,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'El correo es obligatorio';
+                          if (!RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w{2,}$')
+                              .hasMatch(v.trim()))
+                            return 'Formato de correo inválido (ej: nombre@correo.com)';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      _campo(
+                        ctrl: _telefonoCtrl,
+                        label: 'Teléfono (opcional)',
+                        icon: Icons.phone_outlined,
+                        tipo: TextInputType.phone,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return null;
+                          if (v.trim().length < 7)
+                            return 'Mínimo 7 dígitos';
+                          if (v.trim().length > 15)
+                            return 'Máximo 15 dígitos';
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+                      const Divider(),
+                      const SizedBox(height: 12),
+
+                      // ── Datos de acceso ──────────────────────────────
+                      _seccion('Datos de Acceso'),
+                      const SizedBox(height: 12),
+
+                      _campo(
+                        ctrl: _usernameCtrl,
+                        label: 'Nombre de usuario *',
+                        icon: Icons.account_circle_outlined,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'El usuario es obligatorio';
+                          if (v.trim().length < 4)
+                            return 'Mínimo 4 caracteres';
+                          if (v.trim().length > 20)
+                            return 'Máximo 20 caracteres';
+                          if (!RegExp(r'^[a-zA-Z0-9_\.]+$').hasMatch(v.trim()))
+                            return 'Solo letras, números, _ y .';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Campo contraseña (con validator manual)
+                      TextFormField(
+                        controller: _passwordCtrl,
+                        obscureText: _obscure,
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña *',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscure
+                                ? Icons.visibility_off
+                                : Icons.visibility),
+                            onPressed: () =>
+                                setState(() => _obscure = !_obscure),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: kPrimary, width: 2),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Colors.red),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Colors.red, width: 2),
+                          ),
                         ),
-                        child: Row(
-                          children: [
+                        validator: (v) {
+                          if (v == null || v.isEmpty)
+                            return 'La contraseña es obligatoria';
+                          if (v.length < 6)
+                            return 'Mínimo 6 caracteres';
+                          if (v.length > 30)
+                            return 'Máximo 30 caracteres';
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // ── Error del servidor ───────────────────────────
+                      if (_error != null)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEE2E2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: const Color(0xFFFCA5A5)),
+                          ),
+                          child: Row(children: [
                             const Icon(Icons.error_outline,
                                 color: Color(0xFFDC2626), size: 18),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(_error!,
                                   style: const TextStyle(
-                                      color: Color(0xFFDC2626), fontSize: 13)),
+                                      color: Color(0xFFDC2626),
+                                      fontSize: 13)),
                             ),
-                          ],
+                          ]),
                         ),
-                      ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _loading ? null : _registrar,
-                        child: _loading
+
+                      const SizedBox(height: 20),
+
+                      // ── Botón ────────────────────────────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : _registrar,
+                          child: _loading
                             ? const SizedBox(
                                 height: 20, width: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white))
+                                    strokeWidth: 2,
+                                    color: Colors.white))
                             : const Text('Crear cuenta',
-                                style: TextStyle(fontSize: 15,
+                                style: TextStyle(
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold)),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -200,11 +321,27 @@ class _RegistroPublicoScreenState extends State<RegistroPublicoScreen> {
     );
   }
 
-  Widget _campo(TextEditingController ctrl, String label, IconData icon,
-      {TextInputType tipo = TextInputType.text}) {
-    return TextField(
+  Widget _seccion(String titulo) {
+    return Text(titulo,
+        style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF64748B),
+            fontSize: 13));
+  }
+
+  Widget _campo({
+    required TextEditingController ctrl,
+    required String label,
+    required IconData icon,
+    TextInputType tipo = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
       controller: ctrl,
       keyboardType: tipo,
+      inputFormatters: inputFormatters,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -220,9 +357,19 @@ class _RegistroPublicoScreenState extends State<RegistroPublicoScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF0A6E7A), width: 2),
+          borderSide: const BorderSide(color: kPrimary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
       ),
+      validator: validator ??
+          (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
     );
   }
 }
