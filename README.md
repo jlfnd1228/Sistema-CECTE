@@ -1,168 +1,92 @@
-# Sistema CECTE
+# CECTE — Sistema de Registro Academico
 
-Sistema de automatización de registro académico desarrollado como proyecto universitario PGC para la Universidad de Cundinamarca Seccional Girardot.
+Sistema web para el Centro de Educacion para el Trabajo y el Desarrollo Humano, Girardot, Cundinamarca.
 
----
+## Tecnologias
 
-## Integrantes
+| Capa | Tecnologia |
+|------|-----------|
+| Backend | Python · Django · Django REST Framework |
+| Frontend | Flutter Web |
+| Base de datos | SQLite (desarrollo) |
+| Despliegue | Railway |
 
-* Julian Steven Fandiño Duque
-* Juan Diego Diaz Diaz
+## Estructura del proyecto
 
----
-
-## Universidad
-
-Universidad de Cundinamarca
-Seccional Girardot
-
----
-
-## Descripción del proyecto
-
-CECTE es un sistema de automatización académica diseñado para gestionar procesos de registro de estudiantes, programas, materias e inscripciones de manera organizada y eficiente.
-
-El sistema cuenta con un panel administrativo y un panel para estudiantes, permitiendo administrar información académica mediante una arquitectura cliente-servidor utilizando Flutter y Django REST Framework.
-
----
-
-## Tecnologías utilizadas
-
-### Frontend
-
-* Flutter
-* Dart
-* Provider
-
-### Backend
-
-* Python
-* Django
-* Django REST Framework
-
-### Base de Datos
-
-* SQLite
-
-### Otras herramientas
-
-* Git
-* GitHub
-* Token Authentication REST API
-
----
-
-## Funcionalidades principales
-
-* Registro de estudiantes
-* Inicio de sesión autenticado
-* Gestión de programas académicos
-* Gestión de materias
-* Inscripción de estudiantes a materias
-* Administración de notas
-* Dashboard administrativo
-* Gestión de usuarios
-* API REST funcional
-* Interfaz responsive en Flutter
-
----
-
-## Arquitectura del sistema
-
-El proyecto se encuentra dividido en dos partes principales:
-
-### Backend — Django REST API
-
-Encargado de:
-
-* lógica del sistema
-* autenticación
-* gestión de base de datos
-* endpoints REST
-
-Carpeta:
-
-```bash
-CECTE_Web
+```
+CECTE_Web/          ← Backend Django
+cecte_flutter/      ← Frontend Flutter
 ```
 
 ---
 
-### Frontend — Flutter
+## Instalacion y ejecucion local
 
-Encargado de:
-
-* interfaz gráfica
-* experiencia del usuario
-* conexión con la API REST
-
-Carpeta:
+### 1. Backend Django
 
 ```bash
-cecte_flutter
-```
-
----
-
-## Ejecución del proyecto
-
-### Backend
-
-Ingresar a:
-
-```bash
-CECTE_Web
-```
-
-Ejecutar:
-
-```bash
+cd CECTE_Web
+pip install -r requirements.txt
+python manage.py makemigrations
+python manage.py migrate
+python manage.py shell < core/datos_iniciales.py
 python manage.py runserver
 ```
 
----
+El servidor queda en: http://127.0.0.1:8000
 
-### Frontend Flutter
+**Usuario por defecto:** `admin` / `cecte2024`
 
-Ingresar a:
-
-```bash
-cecte_flutter
-```
-
-Ejecutar:
+### 2. Frontend Flutter
 
 ```bash
+cd cecte_flutter
 flutter pub get
 flutter run -d chrome
 ```
 
 ---
 
-## Base de datos
+## API REST — Endpoints
 
-El sistema utiliza SQLite como gestor de base de datos durante el desarrollo.
-
-La estructura relacional incluye las siguientes entidades:
-
-* Usuarios
-* Estudiantes
-* Programas
-* Materias
-* Inscripciones
-
-El backend administra las relaciones mediante modelos relacionales de Django ORM.
-
----
-
-## Repositorio público
-
-Repositorio oficial del proyecto:
-
-https://github.com/jlfnd1228/Sistema-CECTE
+| Metodo | Endpoint | Descripcion | Rol requerido |
+|--------|----------|-------------|---------------|
+| POST | /api/auth/login/ | Iniciar sesion | Publico |
+| POST | /api/auth/logout/ | Cerrar sesion | Autenticado |
+| GET | /api/auth/perfil/ | Ver perfil | Autenticado |
+| POST | /api/auth/crear-usuario/ | Crear usuario | Admin |
+| GET | /api/dashboard/ | Estadisticas | Autenticado |
+| GET/POST | /api/estudiantes/ | Listar / Crear | GET: todos · POST: admin |
+| GET/PUT/DELETE | /api/estudiantes/{id}/ | Ver / Editar / Eliminar | Admin |
+| GET/POST | /api/programas/ | Programas | GET: todos · POST: admin |
+| GET/POST | /api/materias/ | Materias | GET: todos · POST: admin |
+| GET/POST | /api/inscripciones/ | Inscripciones | Autenticado |
 
 ---
 
-## Estado del proyecto
+## Despliegue en Railway
 
-Proyecto funcional desarrollado con fines académicos para automatización de procesos de registro y administración estudiantil.
+1. Crear cuenta en https://railway.app
+2. Nuevo proyecto → Deploy from GitHub repo
+3. Seleccionar la carpeta `CECTE_Web`
+4. Railway detecta el `Procfile` automaticamente
+5. Agregar variable de entorno: `SECRET_KEY=una-clave-segura-larga`
+6. Agregar variable: `DEBUG=False`
+7. En la consola de Railway ejecutar:
+   ```
+   python manage.py migrate
+   python manage.py shell < core/datos_iniciales.py
+   ```
+8. Copiar la URL publica que asigna Railway
+9. En `cecte_flutter/lib/services/auth_service.dart` cambiar:
+   ```dart
+   const String kBaseUrl = 'https://TU-URL.railway.app/api';
+   ```
+10. Recompilar Flutter: `flutter build web`
+
+---
+
+## Roles del sistema
+
+- **Administrador:** CRUD completo de estudiantes, crear usuarios, ver todo.
+- **Usuario:** Ver listado de estudiantes y materias. No puede registrar ni eliminar.
